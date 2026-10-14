@@ -14,3 +14,11 @@ Controls
 Pink enemies grab, orange enemies are tougher, and black enemies attack quickly. Defeat a boss to refill your health! Your high score saves automatically.
 
 To try it: download the attached ZIP, extract it, and follow the README. It includes Mac and Windows installers. You’ll need BUSY Bar firmware with native JavaScript app support - tested on dev firmware r1009.
+
+## Download and source code
+
+Download [Karate-BUSY-Bar.zip from the v1.3.2 release](https://github.com/SirFlippington/Busy-Bar-Karate/releases/tag/v1.3.2) to install the game. The installer requires Python 3.
+
+The game source is now available directly in [main.js](main.js), with its [app manifest](manifest.json), [installer](install.py), [build script](build.py) and [tests](test-game.cjs).
+
+See [DEVELOPING.md](DEVELOPING.md) for instructions to edit, test, rebuild and install your own version. The build script combines the checked-out source with the media assets from the published release.

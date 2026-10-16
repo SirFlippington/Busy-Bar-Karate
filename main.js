@@ -1,6 +1,6 @@
 /* Karate — standalone BUSY Bar / JerryScript application.
    Runtime contract: busy-app/busybar-firmware, JavaScript Applications.
-   Physical controls: Start=tap punch / double-tap kick; dial press=turn; Back=exit. */
+   Physical controls: Start=tap punch / double-tap kick; dial rotation=face; press=turn; Back=exit. */
 var attackSerial=0, introStarted=0, lastTap=-1, tapWindow=250, urgent=false;
 var APP = 'app.kungfu.endless';
 var API = 'http://127.0.0.1/api/';
@@ -10,6 +10,20 @@ var DUR = {ready:INTRO_SECONDS,player:.5, enemy:.5, enemy2:.5, hit:.5, playerhit
 var SPECIAL={ready:'sounds/ready.snd',gameover:'sounds/gameover.snd',bossstart:'sounds/bossstart.snd',bossfinish:'sounds/bossfinish.snd',bossfail:'sounds/bossfail.snd'};
 var SPEED={grabber:[13,14,15,16,17,18,19],brute:[8,9,10,11,12,13,14],striker:[15,17,19,21,23,25,27]};
 var STOP={grabber:5,brute:7,striker:5};
+// Movement uses existing animation tiers so visible feet and hit timing stay aligned.
+var DIFFICULTIES=[
+    {name:'EASY',spawn:1.45,tier:-1,crowd:-1,attack:1.35,boss:.75},
+    {name:'NORMAL',spawn:1,tier:0,crowd:0,attack:1,boss:1},
+    {name:'HARD',spawn:.78,tier:1,crowd:1,attack:.85,boss:1.25},
+    {name:'INSANE',spawn:.55,tier:3,crowd:2,attack:.65,boss:1.5}
+];
+var difficulty=1;
+try {var storedDifficulty=parseInt(localStorage.getItem('difficulty'),10);if(storedDifficulty>=0&&storedDifficulty<4)difficulty=storedDifficulty;}catch(e){}
+function rules(){return DIFFICULTIES[difficulty];}
+function bestKey(){return difficulty===1?'high-score':'high-score-'+rules().name.toLowerCase();}
+function loadBest(){try{game.best=Math.max(0,parseInt(localStorage.getItem(bestKey()),10)||0);}catch(e){game.best=0;}savedBest=game.best;}
+function selectDifficulty(step){difficulty=(difficulty+step+4)%4;loadBest();try{localStorage.setItem('difficulty',String(difficulty));}catch(e){}urgent=true;rearAt=0;draw();}
+function showSetup(){saveBest();game.phase='setup';game.enemies=[];boss=null;game.pose='idle';recordTime=0;lastTap=-1;urgent=true;rearAt=0;draw();}
 var boss=null,bossCleared=0,bossLevel=0,bossFailed=false,stageStarted=0;
 var runBest=0,recordPending=false,recordAnnounced=false,recordTime=0,grabbed=false;
 var game = {phase:'ready', time:0, phaseTime:0, score:0, best:0, level:1, hp:8,
@@ -29,7 +43,7 @@ function request(path, body, method) {
 }
 function saveBest() {
     if(game.best<=savedBest)return;
-    try {localStorage.setItem('high-score',String(game.best));savedBest=game.best;}
+    try {localStorage.setItem(bestKey(),String(game.best));savedBest=game.best;}
     catch(e){console.log('Score save:',String(e));}
 }
 function play(name, priority) {
@@ -53,7 +67,7 @@ function reset() {
     runBest=game.best;recordPending=false;recordAnnounced=false;recordTime=0;
     lastTap=-1;saveBest();introStarted=Date.now();lastTick=Date.now();game.phase='ready';game.time=0;game.phaseTime=0;game.score=0;game.level=1;
     game.hp=8;game.face=1;game.pose='idle';game.attack=0;game.cooldown=0;game.invincible=0;
-    game.spawn=.65;game.levelFlash=0;game.enemies=[];game.particles=0;
+    game.spawn=.65*rules().spawn;game.levelFlash=0;game.enemies=[];game.particles=0;
     soundRemaining=0;soundUntil=0;soundPriority=0;musicPhase=0;musicEpoch=Date.now()+INTRO_SECONDS*1000;nextSound=null;play('ready',4);
 }
 function face(direction){if(game.phase==='dead'||game.phase==='over')return;game.face=direction<0?-1:1;urgent=true;draw();}
@@ -80,7 +94,7 @@ function advanceLevel(){
     return false;
 }
 function startBoss(){
-    var cycle=Math.floor(bossLevel/10),hp=Math.min(28,6+cycle*2);
+    var cycle=Math.floor(bossLevel/10),hp=Math.round(Math.min(28,6+cycle*2)*rules().boss);
     boss={hp:hp,maxHp:hp,x:5,direction:1,mode:'step',serial:0,motionStart:0,hit:false,stun:0,cycle:cycle};
     game.phase='play';game.phaseTime=0;game.invincible=.5;urgent=true;
 }
@@ -176,17 +190,17 @@ function update(dt){
     if(game.attack===0)game.pose='idle';
     if(boss){updateBoss(dt);return;}
     game.spawn-=dt;
-    if(game.spawn<=0 && game.enemies.length<Math.min(6,2+Math.ceil(game.level/2))){
+    if(game.spawn<=0 && game.enemies.length<Math.max(2,Math.min(6,2+Math.ceil(game.level/2)+rules().crowd))){
         var side=Math.random()<.5?-1:1,slot=0,used={};
         for(var si=0;si<game.enemies.length;si++)used[game.enemies[si].slot]=true;
         while(used[slot])slot++;
-        var tier=Math.min(6,Math.floor((game.level-1)/3)),roll=Math.random();
+        var tier=Math.max(0,Math.min(6,Math.floor((game.level-1)/3)+rules().tier)),roll=Math.random();
         var type=game.level>=4&&roll<.25?'striker':game.level>=2&&roll<.6?'brute':'grabber';
         var speed=SPEED[type][tier];
         game.enemies.push({id:game.nextId++,slot:slot,x:side<0?-6:78,side:side,pose:'walk',dead:0,
             speed:speed,tier:tier,approach:true,motionStart:0,wind:0,cooldown:0,type:type,
             hp:type==='brute'?2:1,stun:0,grabbing:false,grabTick:0});
-        game.spawn=Math.max(.38,1.05-(game.level-1)*.035)*(.8+Math.random()*.4);
+        game.spawn=Math.max(.38,1.05-(game.level-1)*.035)*(.8+Math.random()*.4)*rules().spawn;
     }
     grabbed=false;
     for(var i=game.enemies.length-1;i>=0;i--){
@@ -208,16 +222,16 @@ function update(dt){
         if(dist>stop){e.x-=e.side*e.speed*dt;if(Math.abs(e.x-36)<stop)e.x=36+e.side*stop;e.pose='walk';}
         else if(e.grabbing){
             grabbed=true;e.pose='grab';e.grabTick-=dt;
-            if(e.grabTick<=0){e.grabTick=Math.max(.7,1.05-game.level*.01);damagePlayer(1);}
+            if(e.grabTick<=0){e.grabTick=Math.max(.7,1.05-game.level*.01)*rules().attack;damagePlayer(1);}
         }else if(e.wind>0){
             e.wind-=dt;e.pose=e.type==='grabber'?'grab':e.type==='brute'?'kick':'punch';
             if(e.wind<=0){
                 if(e.type==='grabber'){e.grabbing=true;e.grabTick=.25;grabbed=true;}
                 else damagePlayer(e.type==='brute'?2:1);
                 if(game.phase!=='play')return;
-                e.cooldown=e.type==='brute'?1.4:Math.max(.55,.85-game.level*.01);
+                e.cooldown=(e.type==='brute'?1.4:Math.max(.55,.85-game.level*.01))*rules().attack;
             }
-        }else if(e.cooldown<=0){e.wind=e.type==='brute'?.45:e.type==='striker'?.22:.28;e.pose='idle';play(e.type==='striker'?'enemy2':'enemy',1);}
+        }else if(e.cooldown<=0){e.wind=(e.type==='brute'?.45:e.type==='striker'?.22:.28)*rules().attack;e.pose='idle';play(e.type==='striker'?'enemy2':'enemy',1);}
         else e.pose='idle';
     }
 }
@@ -255,7 +269,7 @@ function elements(){
     out.push(rect('bosshp',0,15,bossVisible?Math.max(1,Math.round(72*boss.hp/boss.maxHp)):1,1,'front',bossVisible?'#FF455FFF':'#00000000',25));
     out.push(rect('healthf',0,0,Math.max(1,game.hp*3),1,'front',game.hp?'#67FF9AFF':'#00000000',20));
     out.push(textElement('levelf','L'+game.level,70,0,'front',game.levelFlash?'#FFFF00FF':'#FFFFFFFF','tiny','top_right'));
-    out.push(textElement('brand','KARATE',74,0,'back','#FFFFFFFF','normal','top_mid'));
+    out.push(textElement('brand','KARATE / '+rules().name,74,0,'back','#FFFFFFFF','small','top_mid'));
     out.push(textElement('score','SCORE '+game.score,2,17,'back','#FFFFFFFF','small'));
     out.push(textElement('level','LV '+game.level,144,17,'back','#FFFFFFFF','small','top_right'));
     out.push(textElement('best','BEST '+game.best,2,29,'back','#BBBBBBFF','small'));
@@ -268,8 +282,16 @@ function elements(){
     var record=recordTime>0;
     out.push(textElement('titlef',title||(recordTime>3?'NEW BEST!':''),36,4,'front','#FFFF55FF',title.length>8?'tiny':'small','top_mid'));
     out.push(textElement('titleb',record?'NEW HIGH SCORE '+game.best:title||'TAP:PUNCH  2 TAPS:KICK',74,45,'back','#FFFFFFFF','tiny','top_mid'));
-    out.push(textElement('turnhelp',game.phase==='bosswin'?'HEALTH FULL!':grabbed?'GRABBED! TURN + STRIKE':'DIAL PRESS: TURN',74,56,'back','#BBBBBBFF','tiny','top_mid'));
-    out.push(textElement('hint',game.phase==='over'?'START: TRY AGAIN':bossVisible?'STRIKE AS HE APPROACHES':game.levelFlash?'LEVEL UP! +1 HP':'BACK: EXIT',74,73,'back','#FFFFFFFF','tiny','top_mid'));
+    out.push(textElement('turnhelp',game.phase==='bosswin'?'HEALTH FULL!':grabbed?'GRABBED! TURN + STRIKE':'DIAL: ROTATE / PRESS TO TURN',74,56,'back','#BBBBBBFF','tiny','top_mid'));
+    out.push(textElement('hint',game.phase==='over'?'START:RETRY DIAL:SETUP':bossVisible?'STRIKE AS HE APPROACHES':game.levelFlash?'LEVEL UP! +1 HP':'BACK: EXIT',74,73,'back','#FFFFFFFF','tiny','top_mid'));
+    var menu=[rect('setupfront',0,0,72,16,'front','#000000FF',40),rect('setupback',0,0,160,80,'back','#000000FF',40),
+        textElement('setupname',rules().name,36,0,'front','#FFFF55FF','small','top_mid'),
+        textElement('setupstart','START TO PLAY',36,9,'front','#FFFFFFFF','tiny','top_mid'),
+        textElement('setupheading','KARATE - DIFFICULTY',74,0,'back','#FFFFFFFF','small','top_mid'),
+        textElement('setuphelp','TURN DIAL / PRESS TO CHOOSE',74,59,'back','#BBBBBBFF','tiny','top_mid'),
+        textElement('setupgo','START: PLAY   BACK: EXIT',74,71,'back','#FFFFFFFF','tiny','top_mid')];
+    for(var di=0;di<4;di++)menu.push(textElement('difficulty'+di,(difficulty===di?'> ':'  ')+DIFFICULTIES[di].name,12,15+di*10,'back',difficulty===di?'#FFFF55FF':'#BBBBBBFF','tiny'));
+    for(var mi=0;mi<menu.length;mi++){if(menu[mi].type==='text')menu[mi].z_index=50;menu[mi].opacity=game.phase==='setup'?100:0;out.push(menu[mi]);}
     return out;
 }
 function draw(){
@@ -323,6 +345,7 @@ function quit(){
 }
 function startTap(){
     var now=Date.now();
+    if(game.phase==='setup'){reset();urgent=true;rearAt=0;draw();return;}
     if(game.phase==='over'){lastTap=-1;reset();urgent=true;draw();return;}
     if(game.phase!=='play')return;
     if(lastTap>=0 && now-lastTap<=tapWindow){
@@ -332,12 +355,23 @@ function startTap(){
     }
 }
 var unbind=listen('input',function(event){
-    if(stopped||event.action!=='press')return;
+    if(stopped)return;
+    if(event.key==='encoder'&&game.phase==='setup'){
+        if(event.action==='clockwise')selectDifficulty(1);
+        else if(event.action==='counterclockwise')selectDifficulty(-1);
+        return;
+    }
+    if(event.key==='encoder'){
+        if(event.action==='clockwise')face(1);
+        else if(event.action==='counterclockwise')face(-1);
+        return;
+    }
+    if(event.action!=='press')return;
     if(event.key==='start')startTap();
-    else if(event.key==='ok')face(-game.face);
+    else if(event.key==='ok'){if(game.phase==='setup')selectDifficulty(1);else if(game.phase==='over')showSetup();else face(-game.face);}
     else if(event.key==='back')quit();
 });
-reset();draw();
+loadBest();showSetup();
 tickId=setInterval(function(){
     if(stopped)return;
     var now=Date.now(),dt=Math.max(0,Math.min(1,(now-lastTick)/1000));lastTick=now;

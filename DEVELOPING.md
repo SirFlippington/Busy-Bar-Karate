@@ -26,6 +26,8 @@ python3 build.py --assets-zip /path/to/Karate-BUSY-Bar.zip
 
 The output is `build/Karate-BUSY-Bar.zip`. It includes the checked-out `main.js` and `manifest.json`, packaged at the paths BUSY Bar expects. Edit the root source files and rebuild to make changes. Generated files under `build/` are ignored by Git.
 
+The shareable ZIP contains a losslessly compressed `Karate.tar.xz`. The installer converts it in memory to the gzip package BUSY Bar accepts. This reduces the download size while preserving every audio sample and animation frame. It does not reduce installed storage or USB upload size. Python needs its standard `lzma` module (included in the normal Python installers). Building uses a larger compression dictionary and may take a minute. `build/Karate.tgz` is also produced for direct device API installation.
+
 ## Check changes
 
 With Node.js installed:

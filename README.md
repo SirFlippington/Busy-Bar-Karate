@@ -7,7 +7,7 @@ It’s an endless arcade fighter that runs entirely on the front colour LED scre
 Controls
 • Tap Start/Pause to punch.
 • Double-tap it quickly to kick.
-• Press the dial inward to turn around.
+• Rotate the dial clockwise to face right or counterclockwise to face left; press inward to turn around.
 • Press Back to exit.
 • At game over, tap Start/Pause to try again.
 
@@ -17,8 +17,16 @@ To try it: download the attached ZIP, extract it, and follow the README. It incl
 
 ## Download and source code
 
-Download [Karate-BUSY-Bar.zip from the v1.3.2 release](https://github.com/SirFlippington/Busy-Bar-Karate/releases/tag/v1.3.2) to install the game. The installer requires Python 3.
+Download [Karate-BUSY-Bar-v1.4.0.zip from the v1.4.0 release](https://github.com/SirFlippington/Busy-Bar-Karate/releases/tag/v1.4.0) to install the game. The installer requires Python 3.
 
 The game source is now available directly in [main.js](main.js), with its [app manifest](manifest.json), [installer](install.py), [build script](build.py) and [tests](test-game.cjs).
 
 See [DEVELOPING.md](DEVELOPING.md) for instructions to edit, test, rebuild and install your own version. The build script combines the checked-out source with the media assets from the published release.
+
+## Version 1.4.0: difficulty setup and dial controls
+
+On opening Karate, select EASY, NORMAL, HARD or INSANE by rotating the dial (pressing it cycles forward). Press Start/Pause to begin READY → GO. The last difficulty is remembered. Normal preserves the original balance and high score; other modes save separate best scores. Easy reduces enemy pressure; Hard and INSANE increase spawn frequency, movement tiers and boss health.
+
+During combat, rotate clockwise to face right, counterclockwise to face left, or press the dial to reverse. Single-tap Start/Pause punches; double-tap kicks. At game over, Start/Pause retries the same mode and pressing the dial returns to setup. Back exits.
+
+Requires compatible native-app firmware; the manifest targets API 27.12.0 (r1018). This update was tested locally without a connected BUSY Bar.

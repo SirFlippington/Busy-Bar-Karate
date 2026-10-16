@@ -1,8 +1,8 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const path=require('path');
 const root=path.join(__dirname,'build/app.kungfu.endless/');
-function setup(best=5000){
-  let now=10000,handler,requests=[],store={'high-score':String(best)};
+function setup(best=5000,saved={}){
+  let now=10000,handler,requests=[],store={'high-score':String(best),...saved};
   const math=Object.create(Math);math.random=()=>.95;
   const c={console,Date:{now:()=>now},Math:math,JSON,Promise,parseInt,Error,
     localStorage:{getItem:k=>store[k],setItem:(k,v)=>store[k]=v},
@@ -14,9 +14,30 @@ function setup(best=5000){
   return {c,requests,store,flush,advance:async(seconds)=>{now+=seconds*1000;c.update(seconds);c.draw();await flush();},event:(key,action='press')=>handler({key,action})};
 }
 function foe(type='grabber',x=41,extra={}){return{id:10,slot:0,type,x,side:x<36?-1:1,pose:'idle',dead:0,hp:type==='brute'?2:1,speed:13,tier:0,approach:false,motionStart:1,wind:0,cooldown:0,stun:0,grabbing:false,grabTick:0,...extra};}
-async function running(best=5000){const t=setup(best);await t.flush();await t.advance(5.7);t.c.game.spawn=100;return t;}
+async function running(best=5000){const t=setup(best);await t.flush();t.event('start');await t.flush();await t.advance(5.7);t.c.game.spawn=100;return t;}
 (async()=>{
+  let menu=setup();await menu.flush();assert.equal(menu.c.game.phase,'setup');await menu.advance(20);
+  assert.equal(menu.c.game.phase,'setup');assert.equal(menu.c.game.enemies.length,0);assert.equal(menu.requests.filter(r=>r.url.endsWith('audio/play')).length,0);
+  menu.event('encoder','clockwise');assert.equal(menu.c.rules().name,'HARD');assert.equal(menu.store.difficulty,'2');
+  menu.event('encoder','counterclockwise');assert.equal(menu.c.rules().name,'NORMAL');assert.equal(menu.c.game.best,5000);
+  menu.event('ok');assert.equal(menu.c.rules().name,'HARD');assert.equal(menu.c.game.best,0);
+  menu.c.addScore(20);assert.equal(menu.store['high-score-hard'],'20');assert.equal(menu.store['high-score'],'5000');
+  menu=setup(5000,{difficulty:'3','high-score-insane':'200'});await menu.flush();assert.equal(menu.c.rules().name,'INSANE');assert.equal(menu.c.game.best,200);
+  menu.event('start');await menu.flush();assert.equal(menu.c.game.phase,'ready');await menu.advance(4.7);assert.equal(menu.c.game.phase,'go');await menu.advance(1);assert.equal(menu.c.game.phase,'play');
+  const pressures=[];
+  for(let d=0;d<4;d++){
+    const q=await running();q.c.difficulty=d;q.c.game.spawn=0;await q.advance(.01);
+    const enemy=q.c.game.enemies[0];assert.equal(enemy.speed,q.c.SPEED[enemy.type][enemy.tier]);
+    q.c.bossLevel=10;q.c.startBoss();pressures.push({spawn:q.c.game.spawn,hp:q.c.boss.hp,tier:enemy.tier});
+  }
+  for(let d=1;d<4;d++){assert(pressures[d].spawn<pressures[d-1].spawn);assert(pressures[d].hp>pressures[d-1].hp);assert(pressures[d].tier>=pressures[d-1].tier);}
+  menu.c.game.phase='over';menu.event('ok');assert.equal(menu.c.game.phase,'setup');
   let t=await running(),c=t.c;
+  t.event('encoder','counterclockwise');assert.equal(c.game.face,-1);
+  t.event('encoder','clockwise');assert.equal(c.game.face,1);
+  t.event('encoder','clockwise');assert.equal(c.game.face,1,'Repeated clockwise ticks keep facing right');
+  t.event('ok');assert.equal(c.game.face,-1,'Dial press still reverses');t.event('ok');
+  c.game.phase='dead';t.event('encoder','counterclockwise');assert.equal(c.game.face,1,'Death animation direction remains fixed');c.game.phase='play';
   assert.equal(c.game.phase,'play');c.game.enemies=[foe()];
   await t.advance(.01);assert(c.game.enemies[0].wind>0);await t.advance(.3);
   assert(c.game.enemies[0].grabbing,'Pink enemy attaches');let hp=c.game.hp;await t.advance(.3);

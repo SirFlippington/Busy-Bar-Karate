@@ -6,6 +6,8 @@ Python standard library only. Does not install or launch anything on BUSY Bar.
 import argparse
 import hashlib
 import io
+import gzip
+import lzma
 import shutil
 import tarfile
 import urllib.request
@@ -69,11 +71,15 @@ def main():
                 with path.open('rb') as stream:
                     package.addfile(info, stream)
     files = ['install.py', 'Install on BUSY Bar.command', 'Install on Windows.cmd', 'README.md']
+    # A large dictionary reuses overlapping music across files without changing
+    # any samples. The installer converts this back to the device's gzip format.
+    with gzip.open(destination / 'Karate.tgz', 'rb') as source, lzma.open(destination / 'Karate.tar.xz', 'wb', preset=9) as target:
+        shutil.copyfileobj(source, target, 1024 * 1024)
     for name in files:
         shutil.copyfile(ROOT / name, destination / name)
     (destination / 'Install on BUSY Bar.command').chmod(0o755)
     with zipfile.ZipFile(destination / 'Karate-BUSY-Bar.zip', 'w', zipfile.ZIP_DEFLATED) as bundle:
-        for name in ['Karate.tgz'] + files:
+        for name in ['Karate.tar.xz'] + files:
             bundle.write(destination / name, 'Karate/' + name)
     print('Built:', destination / 'Karate-BUSY-Bar.zip')
     print('To install over USB: python3 build/install.py --launch')

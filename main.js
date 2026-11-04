@@ -291,7 +291,8 @@ function elements(){
         textElement('setuphelp','TURN DIAL / PRESS TO CHOOSE',74,59,'back','#BBBBBBFF','tiny','top_mid'),
         textElement('setupgo','START: PLAY   BACK: EXIT',74,71,'back','#FFFFFFFF','tiny','top_mid')];
     for(var di=0;di<4;di++)menu.push(textElement('difficulty'+di,(difficulty===di?'> ':'  ')+DIFFICULTIES[di].name,12,15+di*10,'back',difficulty===di?'#FFFF55FF':'#BBBBBBFF','tiny'));
-    for(var mi=0;mi<menu.length;mi++){if(menu[mi].type==='text')menu[mi].z_index=50;menu[mi].opacity=game.phase==='setup'?100:0;out.push(menu[mi]);}
+    // Firmware 1.3.1 supports opacity only on images, animations and XPM bitmaps, so hide text and rectangles by colour too.
+    var inSetup=game.phase==='setup';for(var mi=0;mi<menu.length;mi++){if(menu[mi].type==='text')menu[mi].z_index=50;menu[mi].opacity=inSetup?100:0;if(!inSetup){if(menu[mi].type==='text')menu[mi].color='#00000000';else if(menu[mi].type==='rectangle')menu[mi].fill_colors=['#00000000'];}out.push(menu[mi]);}
     return out;
 }
 function draw(){

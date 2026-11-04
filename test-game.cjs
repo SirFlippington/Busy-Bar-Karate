@@ -22,6 +22,10 @@ async function running(best=5000){const t=setup(best);await t.flush();t.event('s
   menu.event('encoder','counterclockwise');assert.equal(menu.c.rules().name,'NORMAL');assert.equal(menu.c.game.best,5000);
   menu.event('ok');assert.equal(menu.c.rules().name,'HARD');assert.equal(menu.c.game.best,0);
   menu.c.addScore(20);assert.equal(menu.store['high-score-hard'],'20');assert.equal(menu.store['high-score'],'5000');
+  const menuIds=e=>/^(setup|difficulty)/.test(e.id),ink=e=>e.type==='text'?e.color:e.fill_colors&&e.fill_colors[0];
+  assert(menu.c.elements().filter(menuIds).some(e=>ink(e)!=='#00000000'),'Setup menu is visible on the setup screen');
+  const playing=await running();const leftover=playing.c.elements().filter(menuIds);
+  assert(leftover.length&&leftover.every(e=>ink(e)==='#00000000'),'Setup menu is hidden by colour once play starts: firmware 1.3.1 ignores opacity on text and rectangles');
   menu=setup(5000,{difficulty:'3','high-score-insane':'200'});await menu.flush();assert.equal(menu.c.rules().name,'INSANE');assert.equal(menu.c.game.best,200);
   menu.event('start');await menu.flush();assert.equal(menu.c.game.phase,'ready');await menu.advance(4.7);assert.equal(menu.c.game.phase,'go');await menu.advance(1);assert.equal(menu.c.game.phase,'play');
   const pressures=[];

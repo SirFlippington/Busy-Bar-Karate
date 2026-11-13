@@ -17,7 +17,7 @@ To try it: download the attached ZIP, extract it, and follow the README. It incl
 
 ## Download and source code
 
-Download [Karate-BUSY-Bar-v1.4.0.zip from the v1.4.0 release](https://github.com/SirFlippington/Busy-Bar-Karate/releases/tag/v1.4.0) to install the game. The installer requires Python 3.
+Download [Karate-BUSY-Bar-v1.4.1.zip from the v1.4.1 release](https://github.com/SirFlippington/Busy-Bar-Karate/releases/tag/v1.4.1) to install the game. The installer requires Python 3.
 
 The game source is now available directly in [main.js](main.js), with its [app manifest](manifest.json), [installer](install.py), [build script](build.py) and [tests](test-game.cjs).
 
@@ -30,3 +30,7 @@ On opening Karate, select EASY, NORMAL, HARD or INSANE by rotating the dial (pre
 During combat, rotate clockwise to face right, counterclockwise to face left, or press the dial to reverse. Single-tap Start/Pause punches; double-tap kicks. At game over, Start/Pause retries the same mode and pressing the dial returns to setup. Back exits.
 
 Requires compatible native-app firmware; the manifest targets API 27.12.0 (r1018). This update was tested locally without a connected BUSY Bar.
+
+## Version 1.4.1: setup screen fix
+
+Fixes the difficulty menu covering gameplay on firmware 1.3.1 (API 27.14.0). Menu text and rectangles now use transparent colours after Start. Includes the fix and regression test contributed by @mrlunev in pull request #1. Local tests passed; the contributor reports successful testing on a BUSY Bar.

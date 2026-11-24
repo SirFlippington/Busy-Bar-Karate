@@ -34,3 +34,9 @@ Requires compatible native-app firmware; the manifest targets API 27.12.0 (r1018
 ## Version 1.4.1: setup screen fix
 
 Fixes the difficulty menu covering gameplay on firmware 1.3.1 (API 27.14.0). Menu text and rectangles now use transparent colours after Start. Includes the fix and regression test contributed by @mrlunev in pull request #1. Local tests passed; the contributor reports successful testing on a BUSY Bar.
+
+## BUSY Apps Catalog build
+
+The repository includes all game assets and supports the official `busy-cli build` workflow. Run `npm ci`, then `npm test` and `npx busy-cli build`. See DEVELOPING.md for details.
+
+Source code is MIT licensed; see ASSETS.md for supplied media provenance.

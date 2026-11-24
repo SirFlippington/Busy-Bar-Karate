@@ -1,0 +1,12 @@
+{
+  "name": "busy-bar-karate",
+  "version": "1.4.1",
+  "private": true,
+  "scripts": {
+    "build": "busy-cli build",
+    "test": "node test-game.cjs"
+  },
+  "devDependencies": {
+    "@busy-app/cli": "0.6.0"
+  }
+}

@@ -90,7 +90,7 @@ for actor in colors:
             for direction in ['r','l']:
                 frame=img if direction=='r' else ImageOps.mirror(img)
                 images[actor,pose,direction,display]=frame
-                frame.save(root/'images'/f'{actor}_{pose}_{direction}_{display}.png')
+                if display=='front':frame.save(root/'images'/f'{actor}_{pose}_{direction}_{display}.png')
 
 def compress(frame):
     # Minimal lossless QOI stream: explicit RGBA pixels plus runs of identical pixels.
@@ -255,46 +255,9 @@ icon=Image.new('RGBA',(8,8),(0,0,0,0));pen=ImageDraw.Draw(icon)
 pen.rectangle((1,2,5,5),fill='#35C7FF');pen.rectangle((2,1,6,3),fill='#FFD1A3')
 pen.line((2,2,6,2),fill='#F2FBFF');pen.rectangle((0,5,3,6),fill='#35C7FF')
 icon.save(root/'appmeta/icon_front_8x8.png')
-# Entire score and all effects are synthesized here, with a deterministic noise seed.
-RATE=44100
-rng=np.random.default_rng(20261126)
-def tone(freq,seconds,volume=.12):
-    t=np.arange(round(seconds*RATE))/RATE
-    env=np.minimum(1,t/.008)*np.minimum(1,(seconds-t)/.04)
-    return np.sin(2*np.pi*freq*t)*env*volume
-music=np.zeros(RATE*16)
-# An original syncopated eight-bar motif in D minor, composed for this game.
-notes=[62,69,65,72,67,65,60,69, 62,67,70,65,74,69,67,60,
-       65,72,69,62,70,67,64,69, 60,67,65,72,69,64,62,57]
-for i,note in enumerate(notes):
-    start=round(i*.5*RATE);seg=tone(440*2**((note-69)/12),.31,.045)
-    music[start:start+len(seg)]+=seg
-    bass=tone(73.416 if i<16 else 87.307,.4,.035);music[start:start+len(bass)]+=bass
-    click=rng.uniform(-1,1,2205)*np.exp(-np.arange(2205)/350)*.025;music[start:start+2205]+=click
-DUR={'ready':5.591,'player':.5,'enemy':.5,'enemy2':.5,'hit':.5,'playerhit':.5,'enemyhit':.5,'level':.5,'death':1,'gameover':2.624,'music':8,'bossstart':4.25,'bossfinish':4.5,'bossfail':3.25}
-def effect(name):
-    size=round(DUR[name]*RATE);out=np.zeros(size)
-    if name=='music':return out
-    if name in ['player','enemy','enemy2','hit','playerhit','enemyhit']:
-        t=np.arange(size)/RATE;freq={'player':530,'enemy':170,'enemy2':230,'hit':90,'playerhit':125,'enemyhit':105}[name]
-        out=(rng.uniform(-1,1,size)*.10+np.sin(2*np.pi*(freq*t-70*t*t))*.15)*np.exp(-t*22)
-    else:
-        melody={'ready':[62,62,65,69],'level':[74,81,86],'death':[62,57,50,38],
-        'gameover':[65,62,57,50],'bossstart':[38,45,50,53,57,50],
-        'bossfinish':[62,65,69,74,77,81,86],'bossfail':[50,53,49,52,45]}[name]
-        step=DUR[name]/(len(melody)+1)
-        for i,n in enumerate(melody):
-            seg=tone(440*2**((n-69)/12),step*.7,.18);start=round(i*step*RATE)
-            out[start:start+len(seg)]+=seg[:size-start]
-    return out
-special={'ready','gameover','bossstart','bossfinish','bossfail'}
-for name in DUR:
-    fx=effect(name)
-    for phase in ([None] if name in special else range(64)):
-        data=fx.copy()
-        if phase is not None and name!='death':data+=music[(np.arange(len(data))+round(phase*.25*RATE))%len(music)]
-        filename=name+('' if phase is None else '_'+str(phase))+'.snd'
-        (root/'sounds'/filename).write_bytes((np.clip(data,-.9,.9)*32767).astype('<i2').tobytes())
+# Audio has its own reproducible generator.
+import runpy
+runpy.run_path(str(root/'generate_audio.py'))
 # Review sheet is outside the packaged image directory.
 review=Image.new('RGB',(670,470),'#0A142B');d=ImageDraw.Draw(review)
 labels={'master':'PLAYER','grabber':'GRABBER','brute':'GUARD','striker':'STRIKER','boss':'BOSS'}

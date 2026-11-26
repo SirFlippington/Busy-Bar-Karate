@@ -6,7 +6,7 @@ var APP = 'app.kungfu.endless';
 var API = 'http://127.0.0.1/api/';
 var INTRO_SECONDS=5.591;
 var READY_SECONDS=INTRO_SECONDS-1.0;
-var DUR = {ready:INTRO_SECONDS,player:.5, enemy:.5, enemy2:.5, hit:.5, playerhit:.5, enemyhit:.5, level:.5, death:1, gameover:2.624, music:8,bossstart:4.25,bossfinish:4.5,bossfail:3.25};
+var DUR = {ready:INTRO_SECONDS,player:.5, kick:.5, kickhit:.5, enemy:.5, enemy2:.5, hit:.5, playerhit:.5, enemyhit:.5, level:.5, death:1, gameover:2.624, music:8,bossstart:4.25,bossfinish:4.5,bossfail:3.25};
 var SPECIAL={ready:'sounds/ready.snd',gameover:'sounds/gameover.snd',bossstart:'sounds/bossstart.snd',bossfinish:'sounds/bossfinish.snd',bossfail:'sounds/bossfail.snd'};
 var SPEED={grabber:[13,14,15,16,17,18,19],brute:[8,9,10,11,12,13,14],striker:[15,17,19,21,23,25,27]};
 var STOP={grabber:5,brute:7,striker:5};
@@ -149,7 +149,7 @@ function attack(kind, upgrade) {
         if(e.hp<=0){e.dead=.45;e.pose='hurt';addScore(e.type==='brute'?20:e.type==='striker'?15:10);}
         game.particles=.22;
     }
-    if(!advanceLevel())play(hits?'playerhit':'player',2);
+    if(!advanceLevel())play(kick?(hits?'kickhit':'kick'):(hits?'playerhit':'player'),2);
     urgent=true;draw();return true;
 }
 function die(){

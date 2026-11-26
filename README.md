@@ -11,9 +11,9 @@ An endless arcade fighter for the front colour LED display. Defend against pink 
 
 Separate high scores are saved for each difficulty. No account or internet is required to play.
 
-## Version 1.5.1
+## Version 1.5.2
 
-Distinct character silhouettes and planted-body attack animations. Completely original pixel characters, moonlit rooftop background, music and effects replace all previously supplied third-party media. Gameplay and controls remain the same. Includes the setup-menu compatibility fix contributed by @mrlunev.
+Original kung-fu-film-inspired 180 BPM chiptune music with plucked tones, gongs and percussion, separate punch/kick sounds, weightier impacts and bitcrushed synthesized martial-arts yells. Distinct character silhouettes and planted-body attack animations. Completely original pixel characters, moonlit rooftop background, music and effects replace all previously supplied third-party media. Gameplay and controls remain the same. Includes the setup-menu compatibility fix contributed by @mrlunev.
 
 ## Build and install
 

@@ -16,4 +16,6 @@ The pinned official CLI and lockfile allow offline builds after dependencies are
 
 The runtime entry is main.js and the package manifest is appmeta/manifest.json. The root manifest.json is retained for the older Python packaging workflow and must match the appmeta copy.
 
+Regenerate original media with `python3 generate_assets.py` (requires Pillow and NumPy). This reads no external media.
+
 The screenshots were captured from the official BUSY Bar Emulator using firmware 1.4.1 (API 27.15.0). Tests cover setup visibility, difficulty, controls, combat, bosses, scoring and music transitions.

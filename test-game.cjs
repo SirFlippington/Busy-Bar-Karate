@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const path=require('path');
-const root=path.join(__dirname,'build/app.kungfu.endless/');
+const root=__dirname+'/';
 function setup(best=5000,saved={}){
   let now=10000,handler,requests=[],store={'high-score':String(best),...saved};
   const math=Object.create(Math);math.random=()=>.95;

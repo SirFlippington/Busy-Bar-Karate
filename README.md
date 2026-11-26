@@ -1,42 +1,34 @@
-# Busy-Bar-Karate<img width="1024" height="1536" alt="BUSY Bar - Karate" src="https://github.com/user-attachments/assets/bb850278-3822-4262-b6c9-55692944f9d0" />
+# Karate for BUSY Bar
 
-I made a little game for BUSY Bar: Karate!
+An endless arcade fighter for the front colour LED display. Defend against pink grabbers, strong orange guards and fast violet strikers. Every 100 points raises the level; every tenth level brings a leaping green miniboss. Defeat the boss to refill your health.
 
-It’s an endless arcade fighter that runs entirely on the front colour LED screen. Enemies rush you from both sides, the difficulty increases every 100 points, and minibosses.
+## Controls
 
-Controls
-• Tap Start/Pause to punch.
-• Double-tap it quickly to kick.
-• Rotate the dial clockwise to face right or counterclockwise to face left; press inward to turn around.
-• Press Back to exit.
-• At game over, tap Start/Pause to try again.
+- Setup: rotate the dial to choose Easy, Normal, Hard or INSANE; Start/Pause begins.
+- Tap Start/Pause to punch; double-tap quickly to kick.
+- Rotate clockwise to face right, counterclockwise to face left; press the dial to turn around.
+- Back exits. At game over, Start/Pause retries and the dial button returns to setup.
 
-Pink enemies grab, orange enemies are tougher, and black enemies attack quickly. Defeat a boss to refill your health! Your high score saves automatically.
+Separate high scores are saved for each difficulty. No account or internet is required to play.
 
-To try it: download the attached ZIP, extract it, and follow the README. It includes Mac and Windows installers. You’ll need BUSY Bar firmware with native JavaScript app support - tested on dev firmware r1009.
+## Version 1.5.0
 
-## Download and source code
+Completely original pixel characters, moonlit rooftop background, music and effects replace all previously supplied third-party media. Gameplay and controls remain the same. Includes the setup-menu compatibility fix contributed by @mrlunev.
 
-Download [Karate-BUSY-Bar-v1.4.1.zip from the v1.4.1 release](https://github.com/SirFlippington/Busy-Bar-Karate/releases/tag/v1.4.1) to install the game. The installer requires Python 3.
+## Build and install
 
-The game source is now available directly in [main.js](main.js), with its [app manifest](manifest.json), [installer](install.py), [build script](build.py) and [tests](test-game.cjs).
+With Node.js 20+ and npm:
 
-See [DEVELOPING.md](DEVELOPING.md) for instructions to edit, test, rebuild and install your own version. The build script combines the checked-out source with the media assets from the published release.
+```sh
+npm ci
+npm test
+npx busy-cli build
+npx busy-cli app install
+npx busy-cli app run
+```
 
-## Version 1.4.0: difficulty setup and dial controls
+On macOS, use `COPYFILE_DISABLE=1 npx busy-cli build` to exclude macOS metadata. The app manifest targets API 27.12.0 or later. See DEVELOPING.md for details.
 
-On opening Karate, select EASY, NORMAL, HARD or INSANE by rotating the dial (pressing it cycles forward). Press Start/Pause to begin READY → GO. The last difficulty is remembered. Normal preserves the original balance and high score; other modes save separate best scores. Easy reduces enemy pressure; Hard and INSANE increase spawn frequency, movement tiers and boss health.
+## Licence and assets
 
-During combat, rotate clockwise to face right, counterclockwise to face left, or press the dial to reverse. Single-tap Start/Pause punches; double-tap kicks. At game over, Start/Pause retries the same mode and pressing the dial returns to setup. Back exits.
-
-Requires compatible native-app firmware; the manifest targets API 27.12.0 (r1018). This update was tested locally without a connected BUSY Bar.
-
-## Version 1.4.1: setup screen fix
-
-Fixes the difficulty menu covering gameplay on firmware 1.3.1 (API 27.14.0). Menu text and rectangles now use transparent colours after Start. Includes the fix and regression test contributed by @mrlunev in pull request #1. Local tests passed; the contributor reports successful testing on a BUSY Bar.
-
-## BUSY Apps Catalog build
-
-The repository includes all game assets and supports the official `busy-cli build` workflow. Run `npm ci`, then `npm test` and `npx busy-cli build`. See DEVELOPING.md for details.
-
-Source code is MIT licensed; see ASSETS.md for supplied media provenance.
+Code, documentation and all current media are MIT licensed. See ASSETS.md and generate_assets.py for the complete reproducible asset source.

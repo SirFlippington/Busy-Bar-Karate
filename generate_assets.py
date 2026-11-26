@@ -13,44 +13,73 @@ for folder in ['images','animations','sounds']:
 animation_dir=root/'animations'
 colors={'master':('#35C7FF','#F2FBFF'),'grabber':('#F05DC4','#FFB9E9'),'brute':('#E89B35','#FFF097'),'striker':('#7276CD','#D0D4FF'),'boss':('#5FDA9D','#FFF29D')}
 poses=['idle','walk1','walk2','walk3','punch','kick','grab','hurt','down','leap']
-def original(actor,pose):
-    # Compact, broad-shouldered figures drawn specifically at LED pixel resolution.
+def original(actor,pose,amount=1):
+    # Individually designed anatomy and costume; no shared recoloured base sprite.
     w,h=(24,14) if actor=='boss' else (20,14 if actor=='master' else 12)
-    im=Image.new('RGBA',(w,h));d=ImageDraw.Draw(im);cx=w//2;top=h-12
-    main,light=colors[actor];skin='#FFD1A3';ink='#12243B';feet='#DBECFF'
-    lean=-1 if pose in ('hurt','down') else 0
-    cx+=lean
-    # Four distinct grounded steps, feet always share the floor baseline.
-    legs={'walk1':(-3,2),'walk2':(-1,1),'walk3':(-2,3)}.get(pose,(-2,2))
-    d.line([(cx-1,top+7),(cx+legs[0],h-2)],fill=main,width=2)
-    d.line([(cx+1,top+7),(cx+legs[1],h-2)],fill=light,width=2)
-    d.line([(cx+legs[0]-1,h-1),(cx+legs[0]+1,h-1)],fill=feet)
-    d.line([(cx+legs[1],h-1),(cx+legs[1]+2,h-1)],fill=feet)
-    if pose=='kick':
-        d.rectangle((cx,top+8,cx+4,h-1),fill=(0,0,0,0))
-        d.line([(cx,top+7),(cx+4,top+6),(cx+7,top+6)],fill=light,width=2)
-        d.point((cx+8,top+6),fill=feet)
-    if pose=='leap':
-        d.rectangle((cx-5,top+8,cx+5,h-1),fill=(0,0,0,0))
-        d.line([(cx,top+7),(cx-3,top+9),(cx-1,top+10)],fill=main,width=2)
-        d.line([(cx+1,top+7),(cx+4,top+8),(cx+3,top+10)],fill=light,width=2)
-    broad=3 if actor in ('brute','boss') else 2
-    d.rectangle((cx-broad,top+4,cx+2,top+7),fill=main)
-    d.line((cx-2,top+7,cx+2,top+7),fill=ink)
-    d.line((cx+1,top+4,cx,top+6),fill=light)
-    # Squared head with a clear forward-facing nose and dark headband.
-    d.rectangle((cx-1,top,cx+2,top+3),fill=skin)
-    d.line((cx-1,top,cx+2,top),fill=ink)
-    d.point((cx+3,top+2),fill=skin);d.point((cx+2,top+1),fill=ink)
-    if actor=='master':d.line((cx-3,top+1,cx+1,top+1),fill='#F5F7FF')
-    if actor=='boss':d.line((cx-2,top,cx+2,top),fill='#FFE066')
-    # Guard, wind-up and full extension are separate authored silhouettes.
-    end= (cx+7,top+4) if pose=='punch' else (cx+4,top+3)
-    if pose=='grab':end=(cx+5,top+5)
-    if pose in ('hurt','down'):end=(cx-4,top+2)
-    d.line([(cx+1,top+4),end],fill=light,width=2);d.point(end,fill=skin)
-    d.line([(cx-2,top+4),(cx-3,top+6),(cx-1,top+6)],fill=main,width=2)
-    if pose=='down':im=im.rotate(-55,resample=Image.Resampling.NEAREST)
+    im=Image.new('RGBA',(w,h));d=ImageDraw.Draw(im)
+    skin='#F5BD87';shade='#B87458';white='#F1F5DF';navy='#31405F'
+    walking=pose.startswith('walk');step={'walk1':-1,'walk2':0,'walk3':1}.get(pose,0)
+    def line(points,c,width=1):d.line(points,fill=c,width=width)
+    def hand(pt):d.point(pt,fill=skin)
+    # Each rig specifies different shoulder/hip heights, stance width, arm reach,
+    # head shape and clothing. Feet share the baseline even while walking.
+    if actor=='master':
+        hip=(9,8);shoulder=(9,4);head=(9,1);cloth=white;dark='#93B8C1'
+        legs=[[(9,8),(8+step,10),(6+step,13)],[(10,8),(12-step,10),(13-step,13)]]
+        arms=[[(8,4),(6,6),(8,7)],[(10,4),(12,5),(13,3)]]
+    elif actor=='grabber':
+        hip=(8,8);shoulder=(10,5);head=(10,3);cloth='#E969A7';dark='#8E3D7F'
+        legs=[[(8,8),(5+step,9),(5+step,11)],[(9,8),(11-step,10),(12-step,11)]]
+        arms=[[(9,5),(11,7),(14,7)],[(11,5),(13,4),(15,5)]]
+    elif actor=='brute':
+        hip=(9,7);shoulder=(9,3);head=(9,0);cloth='#E99A37';dark='#995A29'
+        legs=[[(8,7),(6+step,9),(6+step,11)],[(10,7),(12-step,9),(12-step,11)]]
+        arms=[[(6,3),(4,5),(6,6)],[(12,3),(14,4),(14,2)]]
+    elif actor=='striker':
+        hip=(9,8);shoulder=(10,4);head=(11,2);cloth='#8A92D6';dark='#424B82'
+        legs=[[(9,8),(6+step,9),(4+step,11)],[(10,8),(12-step,9),(13-step,11)]]
+        arms=[[(9,4),(7,5),(5,4)],[(11,4),(13,6),(14,5)]]
+    else:
+        hip=(11,9);shoulder=(11,4);head=(11,2);cloth='#50CB9D';dark='#23785E'
+        legs=[[(10,9),(9+step,11),(8+step,13)],[(12,9),(14-step,11),(15-step,13)]]
+        arms=[[(9,4),(8,7),(10,7)],[(13,4),(15,5),(16,3)]]
+    if pose in ('kick','leap'):
+        x,y=hip
+        legs[1]=[(x+1,y),(x+3,y-2),(x+round(7*amount),y-2)]
+        if pose=='leap':legs[0]=[(x,y),(x-3,y+1),(x-1,y+2)]
+    if pose in ('punch','grab'):
+        x,y=shoulder
+        reach={'master':8,'grabber':7,'brute':7,'striker':8,'boss':9}[actor]
+        arms[1]=[(x+1,y),(x+3,y+1),(min(w-1,x+round(reach*amount)),y)]
+        if actor=='grabber' or pose=='grab':arms[0]=[(x-1,y),(x+2,y+3),(min(w-1,x+round(reach*amount)),y+2)]
+    for n,leg in enumerate(legs):
+        line(leg,dark if n==0 else cloth,2);x,y=leg[-1];line([(x-1,y),(x+1,y)],skin if actor=='master' else '#C7D3DF')
+    x,y=shoulder;hx,hy=hip
+    if actor=='brute':
+        d.polygon([(x-3,y),(x+3,y),(hx+2,hy),(hx-2,hy)],fill=cloth)
+        line([(x,y),(x,hy-1)],skin,2)
+    elif actor=='boss':
+        d.polygon([(x-2,y),(x+2,y),(hx+4,hy+1),(hx-3,hy+1)],fill=cloth)
+        line([(x+1,y),(hx-1,hy)],'#DDF0CB');line([(hx-2,hy-1),(hx+2,hy-1)],'#F5C54C')
+    else:
+        d.polygon([(x-1,y),(x+1,y),(hx+2,hy),(hx-1,hy)],fill=cloth)
+        if actor=='master':line([(x+1,y),(hx,hy-2)],navy);line([(hx-1,hy),(hx+2,hy)],'#EA4B42');line([(hx+1,hy),(hx+2,hy+2)],'#EA4B42')
+    for n,arm in enumerate(arms):
+        line(arm,skin if actor=='brute' else (dark if n==0 else cloth),2 if actor in ('brute','master') else 1);hand(arm[-1])
+    x,y=head
+    if actor=='master':
+        d.rectangle((x-1,y,x+1,y+2),fill=skin);line([(x-1,y),(x+1,y)],'#27344E');d.point((x+2,y+1),fill=skin)
+        line([(x-2,y),(x-3,y+1)],'#EA4B42');d.point((x+1,y+1),fill='#27344E')
+    elif actor=='grabber':
+        d.polygon([(x-1,y-1),(x+1,y-1),(x+2,y+2),(x-2,y+2)],fill='#8E3D7F');line([(x,y+1),(x+2,y+1)],skin)
+    elif actor=='brute':
+        d.rectangle((x-1,y,x+1,y+2),fill=skin);line([(x,y+2),(x+2,y+2)],'#633B32');d.point((x+2,y+1),fill=skin)
+    elif actor=='striker':
+        d.rectangle((x-1,y,x+1,y+2),fill=dark);line([(x,y+1),(x+2,y+1)],'#FFE295');line([(x-2,y+2),(x-5,y+1)],'#C785DB')
+    else:
+        d.rectangle((x,y,x+1,y+2),fill=skin);d.polygon([(x,y-2),(x-4,y),(x+4,y)],fill='#E8C369');line([(x-4,y),(x+4,y)],'#FFF0AD');line([(x,y+3),(x+1,y+4)],white)
+    if pose in ('hurt','down'):
+        im=im.rotate(-25 if pose=='hurt' else -75,resample=Image.Resampling.NEAREST)
     return im
 images={}
 for actor in colors:
@@ -92,9 +121,10 @@ def actor_frames(actor,direction,display):
         body=images[actor,pose,direction,display]
         seq=[body]
         if pose in ('punch','kick'):
-            # Ease the limb out and back using a translated silhouette, not a teleport.
-            half=Image.new('RGBA',body.size)
-            half.alpha_composite(body,(-1 if direction=='r' else 1,0))
+            # Only the attacking limb extends; head, torso and planted foot stay fixed.
+            half=original(actor,pose,.55)
+            if display=='back':half=half.resize((48,32),Image.Resampling.NEAREST)
+            if direction=='l':half=ImageOps.mirror(half)
             seq=[idle]*2+[half]*2+[body]*4+[half]*2+[idle]*2
         if pose in ('hurt','down'):
             seq=[]
@@ -266,10 +296,13 @@ for name in DUR:
         filename=name+('' if phase is None else '_'+str(phase))+'.snd'
         (root/'sounds'/filename).write_bytes((np.clip(data,-.9,.9)*32767).astype('<i2').tobytes())
 # Review sheet is outside the packaged image directory.
-review=Image.new('RGB',(600,390),'#0A142B');d=ImageDraw.Draw(review)
+review=Image.new('RGB',(670,470),'#0A142B');d=ImageDraw.Draw(review)
+labels={'master':'PLAYER','grabber':'GRABBER','brute':'GUARD','striker':'STRIKER','boss':'BOSS'}
 for row,actor in enumerate(colors):
+    d.text((8,row*88+55),labels[actor],fill='white')
     for col,pose in enumerate(['idle','walk1','punch','kick','down']):
-        f=images[actor,pose,'r','front'];review.paste(f.resize((100,70),Image.Resampling.NEAREST),(col*110,row*78+8),f.resize((100,70),Image.Resampling.NEAREST))
-        if row==0:d.text((col*110,0),pose,fill='white')
+        f=images[actor,pose,'r','front'];large=f.resize((f.width*4,f.height*4),Image.Resampling.NEAREST)
+        review.paste(large,(90+col*112,row*88+80-large.height),large)
+        if row==0:d.text((90+col*112,4),pose,fill='white')
 review.save(root/'original-art-preview.png')
 print('Generated original sprites, background, animations and synthesized score/effects.')
